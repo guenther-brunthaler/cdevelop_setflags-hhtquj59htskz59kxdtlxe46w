@@ -3,18 +3,21 @@
 have_configs=
 
 is_config() {
-	have_configs=$have_configs$1:
-	test x"$1" = x"$config"
+	have_configs=$have_configs$1:${1}-nocppflags:
+	test x"$config" = x"$1" && return
+	test x"${config%-nocppflags}" = x"$1" || return
+	nocppflags=true
 }
 
-CFLAGS=
-LDFLAGS=
+unset CPPFLAGS CFLAGS LDFLAGS
+nocppflags=false
 if is_config debug
 then
 	CFLAGS="-ggdb3 -O0"
 elif is_config release
 then
-	CFLAGS="-D NDEBUG -O2 -fomit-frame-pointer"
+	CPPFLAGS="-D NDEBUG"
+	CFLAGS="-O2 -fomit-frame-pointer"
 	CFLAGS="$CFLAGS -fno-stack-check -fno-stack-protector"
 	LDFLAGS="-s -Wl,--hash-style=gnu,--as-needed,-O1"
 else
@@ -29,6 +32,16 @@ else
 	)
 	false || return
 fi
+MAKEFLAGS=`getconf _NPROCESSORS_ONLN || echo 1`
+MAKEFLAGS=`expr $MAKEFLAGS + 1`
+MAKEFLAGS="-j $MAKEFLAGS -l $MAKEFLAGS"
+export CFLAGS LDFLAGS MAKEFLAGS
+if $nocppflags
+then
+	CFLAGS=$CPPFLAGS${CPPFLAGS:+${CFLAGS:+ }}$CFLAGS
+	unset CPPFLAGS
+else
+	export CPPFLAGS
+fi
 unset -f is_config
-unset have_configs config
-export CFLAGS LDFLAGS
+unset have_configs config nocppflags
