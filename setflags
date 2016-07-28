@@ -1,0 +1,34 @@
+#! /bin/false
+
+have_configs=
+
+is_config() {
+	have_configs=$have_configs$1:
+	test x"$1" = x"$config"
+}
+
+CFLAGS=
+LDFLAGS=
+if is_config debug
+then
+	CFLAGS="-ggdb3 -O0"
+elif is_config release
+then
+	CFLAGS="-D NDEBUG -O2 -fomit-frame-pointer"
+	CFLAGS="$CFLAGS -fno-stack-check -fno-stack-protector"
+	LDFLAGS="-s -Wl,--hash-style=gnu,--as-needed,-O1"
+else
+	(
+		echo "Undefined configuration!" >& 2
+		echo "Please set one of those:" >& 2
+		while f=${have_configs%%:*}; test x"$f" != x"$have_configs"
+		do
+			have_configs=${have_configs#"$f:"}
+			echo "config=$f"
+		done
+	)
+	false || return
+fi
+unset -f is_config
+unset have_configs config
+export CFLAGS LDFLAGS
