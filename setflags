@@ -33,9 +33,15 @@ else
 	false || return
 fi
 MAKEFLAGS=`getconf _NPROCESSORS_ONLN || echo 1`
-MAKEFLAGS=`expr $MAKEFLAGS + 1`
-MAKEFLAGS="-j $MAKEFLAGS -l $MAKEFLAGS"
-export CFLAGS LDFLAGS MAKEFLAGS
+if test $MAKEFLAGS = 1
+then
+	unset MAKEFLAGS
+else
+	MAKEFLAGS=`expr $MAKEFLAGS + 1`
+	MAKEFLAGS="-j $MAKEFLAGS -l $MAKEFLAGS"
+	export MAKEFLAGS
+fi
+export CFLAGS LDFLAGS
 if $nocppflags
 then
 	CFLAGS=$CPPFLAGS${CPPFLAGS:+${CFLAGS:+ }}$CFLAGS
