@@ -3,6 +3,7 @@
 have_configs=
 
 is_config() {
+	this_config=$1
 	have_configs=$have_configs$1:${1}-nocppflags:
 	test x"$config" = x"$1" && return
 	test x"${config%-nocppflags}" = x"$1" || return
@@ -11,20 +12,34 @@ is_config() {
 
 unset CPPFLAGS CFLAGS LDFLAGS
 nocppflags=false
+
+CFLAGS='-pipe'
+LDFLAGS="-Wl,--hash-style=gnu,--as-needed,-O1"
 if is_config debug
 then
-	CFLAGS="-ggdb3 -O0"
+	CFLAGS="$CFLAGS -ggdb3 -O0"
 	if test -n "$MALLOC_TRACE"
 	then
 		export MALLOC_TRACE
 		CPPFLAGS="-D MALLOC_TRACE"
 	fi
-elif is_config release
+elif is_config release || is_config rpi1-release || is_config rpi2-release
 then
 	CPPFLAGS="-D NDEBUG"
-	CFLAGS="-O2 -fomit-frame-pointer"
+	CFLAGS="$CFLAGS -fomit-frame-pointer"
 	CFLAGS="$CFLAGS -fno-stack-check -fno-stack-protector"
-	LDFLAGS="-s -Wl,--hash-style=gnu,--as-needed,-O1"
+	LDFLAGS="-s $LDFLAGS"
+	case $this_config in
+		rpi1-*)
+			CFLAGS="-mfloat-abi=hard -mfpu=vfp $CFLAGS"
+			CFLAGS="-O3 -mcpu=arm1176jzf-s $CFLAGS"
+			;;
+		rpi2-*)
+			CFLAGS="-mfloat-abi=hard $CFLAGS"
+			CFLAGS="-O2 -march=armv7-a -mfpu=vfpv4 $CFLAGS"
+			;;
+		*) CFLAGS="-O2 $CFLAGS"
+	esac
 else
 	(
 		echo "Undefined configuration!" >& 2
@@ -55,4 +70,4 @@ else
 	export CPPFLAGS
 fi
 unset -f is_config
-unset have_configs config nocppflags
+unset have_configs config nocppflags this_config
