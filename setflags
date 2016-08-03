@@ -14,6 +14,11 @@ nocppflags=false
 if is_config debug
 then
 	CFLAGS="-ggdb3 -O0"
+	if test -n "$MALLOC_TRACE"
+	then
+		export MALLOC_TRACE
+		CPPFLAGS="-D MALLOC_TRACE"
+	fi
 elif is_config release
 then
 	CPPFLAGS="-D NDEBUG"
