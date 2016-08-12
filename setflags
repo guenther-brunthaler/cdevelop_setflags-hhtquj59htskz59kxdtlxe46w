@@ -13,7 +13,10 @@ is_config() {
 unset CPPFLAGS CFLAGS LDFLAGS
 nocppflags=false
 
-CFLAGS='-pipe'
+CFLAGS="-pipe -Werror -Wall -Wextra -Wpedantic"
+CFLAGS="$CFLAGS -Wmaybe-uninitialized -Wdeclaration-after-statement"
+CFLAGS="$CFLAGS -Wtraditional-conversion -Wmissing-prototypes"
+CFLAGS="$CFLAGS -Wno-parentheses"
 LDFLAGS="-Wl,--hash-style=gnu,--as-needed,-O1"
 if is_config debug
 then
